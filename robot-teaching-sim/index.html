@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robot Teaching Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Header -->
+    <div class="header-bar">
+      <span class="header-title">ROBOT TEACHING SIMULATOR</span>
+      <div id="header-buttons" class="header-buttons"></div>
+    </div>
+
+    <!-- Left Panel: Joint Control -->
+    <div id="panel-left" class="panel-left"></div>
+
+    <!-- Right Panel: Teaching & Playback -->
+    <div id="panel-right" class="panel-right"></div>
+
+    <!-- Status Bar -->
+    <div id="status-bar" class="status-bar"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
