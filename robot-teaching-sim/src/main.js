@@ -23,6 +23,7 @@ let trailPoints = [];
 let trailLine = null;
 let trailEnabled = false;
 let selectedAxis = 0;
+let selectedMoveType = 'PTP';
 
 // ─── Init ───
 function init() {
@@ -118,12 +119,49 @@ function setupUI() {
   // Right panel: Teach button, waypoint list, playback, import/export
   const rightPanel = document.getElementById('panel-right');
 
+  // Move type selector + Teach button row
+  const teachRow = document.createElement('div');
+  teachRow.className = 'flex gap-2 mb-3';
+
+  // PTP/LIN toggle
+  const moveTypeToggle = document.createElement('div');
+  moveTypeToggle.className = 'flex rounded overflow-hidden border border-gray-600';
+
+  const ptpBtn = document.createElement('button');
+  ptpBtn.className = 'move-type-btn move-type-active-ptp';
+  ptpBtn.textContent = 'PTP';
+  ptpBtn.title = 'Point-to-Point (Joint interpolation)';
+
+  const linBtn = document.createElement('button');
+  linBtn.className = 'move-type-btn';
+  linBtn.textContent = 'LIN';
+  linBtn.title = 'Linear (Cartesian interpolation)';
+
+  function updateMoveTypeUI() {
+    if (selectedMoveType === 'PTP') {
+      ptpBtn.className = 'move-type-btn move-type-active-ptp';
+      linBtn.className = 'move-type-btn';
+    } else {
+      ptpBtn.className = 'move-type-btn';
+      linBtn.className = 'move-type-btn move-type-active-lin';
+    }
+  }
+
+  ptpBtn.addEventListener('click', () => { selectedMoveType = 'PTP'; updateMoveTypeUI(); });
+  linBtn.addEventListener('click', () => { selectedMoveType = 'LIN'; updateMoveTypeUI(); });
+
+  moveTypeToggle.appendChild(ptpBtn);
+  moveTypeToggle.appendChild(linBtn);
+  teachRow.appendChild(moveTypeToggle);
+
   // Teach Point button
   const teachBtn = document.createElement('button');
-  teachBtn.className = 'teach-btn mb-3';
+  teachBtn.className = 'teach-btn flex-1';
   teachBtn.textContent = 'TEACH POINT (T)';
   teachBtn.addEventListener('click', () => teachCurrentPoint());
-  rightPanel.appendChild(teachBtn);
+  teachRow.appendChild(teachBtn);
+
+  rightPanel.appendChild(teachRow);
 
   // Waypoint list
   waypointList = new WaypointList(rightPanel, program, player);
@@ -144,7 +182,7 @@ function setupUI() {
 function teachCurrentPoint() {
   const angles = [...controller.currentAngles];
   const tcpInfo = controller.getTCPInfo();
-  const wp = createWaypoint(angles, tcpInfo);
+  const wp = createWaypoint(angles, tcpInfo, { moveType: selectedMoveType });
   program.addWaypoint(wp);
 }
 
@@ -194,16 +232,22 @@ function updateWaypointMarkers() {
     waypointMarkers.push(sprite);
   });
 
-  // Connection lines
+  // Connection lines - color-coded per segment (PTP=blue, LIN=green)
   if (points.length >= 2) {
-    const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-    const lineMat = new THREE.LineDashedMaterial({
-      color: 0x888888,
-      dashSize: 0.03,
-      gapSize: 0.02,
-    });
-    waypointLines = new THREE.Line(lineGeo, lineMat);
-    waypointLines.computeLineDistances();
+    waypointLines = new THREE.Group();
+    for (let i = 1; i < program.waypoints.length; i++) {
+      const wp = program.waypoints[i];
+      const segColor = wp.moveType === 'LIN' ? COLORS.linColor : COLORS.ptpColor;
+      const segGeo = new THREE.BufferGeometry().setFromPoints([points[i - 1], points[i]]);
+      const segMat = new THREE.LineDashedMaterial({
+        color: segColor,
+        dashSize: 0.03,
+        gapSize: 0.02,
+      });
+      const seg = new THREE.Line(segGeo, segMat);
+      seg.computeLineDistances();
+      waypointLines.add(seg);
+    }
     sceneSetup.scene.add(waypointLines);
   }
 }
